@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <a class="brand" href="index.html">▤ City Library</a>
+        <nav class="side-nav">
+            <a href="#overview">Dashboard</a>
+            <a href="#checkout">Checkout</a>
+            <a href="#return">Return</a>
+            <a href="#reports">Reports</a>
+            <a href="index.html">Public Catalogue</a>
+            <button id="logout">Logout</button>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <strong>Librarian Dashboard</strong>
+            <span>Staff operations</span>
+        </header>
+
+        <div class="content" id="overview">
+            <h1 class="page-title">Library operations</h1>
+            <p class="page-subtitle">Manage checkouts, returns and reports.</p>
+            <div id="message" class="message"></div>
+            <div class="notice">A valid librarian session is required for staff operations.</div>
+
+            <div class="stats">
+                <div class="stat"><p>Overdue Loans</p><h3 id="overdue-count">—</h3></div>
+                <div class="stat"><p>Most Borrowed Books</p><h3 id="popular-count">—</h3></div>
+                <div class="stat"><p>API Status</p><h3 id="api-status">Ready</h3></div>
+            </div>
+
+            <section class="panel" id="checkout">
+                <h2>Check out a book</h2>
+                <form id="checkout-form" class="inline-form">
+                    <input id="member-id" type="number" min="1" required placeholder="Member ID">
+                    <input id="copy-id" type="number" min="1" required placeholder="Copy ID">
+                    <button class="btn primary">Checkout</button>
+                </form>
+            </section>
+
+            <section class="panel" id="return">
+                <h2>Return a book</h2>
+                <form id="return-form" class="inline-form">
+                    <input id="loan-id" type="number" min="1" required placeholder="Loan ID">
+                    <input id="return-date" type="date" aria-label="Optional return date">
+                    <button class="btn primary">Return book</button>
+                </form>
+                <p class="small muted">Leave return date empty to use today's date.</p>
+            </section>
+
+            <section class="panel" id="reports">
+                <h2>Overdue Loans</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Member</th><th>Book</th><th>Due date</th><th>Overdue days</th></tr></thead>
+                        <tbody id="overdue-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+                <button class="btn outline" id="refresh">Refresh reports</button>
+            </section>
+
+            <section class="panel">
+                <h2>Most Borrowed Books</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Book</th><th>Borrow count</th></tr></thead>
+                        <tbody id="popular-body"><tr><td colspan="2">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script src="auth.js"></script>
+<script>
+const message = document.getElementById("message");
+
+function getArray(data, keys) {
+    if (Array.isArray(data)) return data;
+    for (const key of keys) {
+        if (Array.isArray(data[key])) return data[key];
+    }
+    return [];
+}
+
+async function loadReports() {
+    try {
+        const [overdueData, popularData] = await Promise.all([
+            apiRequest("/reports/overdue"),
+            apiRequest("/reports/most-borrowed")
+        ]);
+
+        const overdue = getArray(overdueData, ["overdue_loans", "overdue", "items", "loans"]);
+        const popular = getArray(popularData, ["most_borrowed", "books", "items", "results"]);
+
+        document.getElementById("overdue-count").textContent = overdue.length;
+        document.getElementById("popular-count").textContent = popular.length;
+        document.getElementById("api-status").textContent = "Connected";
+
+        document.getElementById("overdue-body").innerHTML = overdue.length
+            ? overdue.map(item => `<tr>
+                <td>${escapeHTML(item.member_name || item.name || item.member_id || "—")}</td>
+                <td>${escapeHTML(item.title || item.book_title || "—")}</td>
+                <td>${formatDate(item.due_date)}</td>
+                <td>${escapeHTML(item.overdue_days ?? item.days_overdue ?? "—")}</td>
+            </tr>`).join("")
+            : '<tr><td colspan="4">No overdue loans.</td></tr>';
+
+        document.getElementById("popular-body").innerHTML = popular.length
+            ? popular.map(item => `<tr>
+                <td>${escapeHTML(item.title || "—")}</td>
+                <td>${escapeHTML(item.borrow_count ?? item.count ?? "—")}</td>
+            </tr>`).join("")
+            : '<tr><td colspan="2">No report data.</td></tr>';
+
+    } catch (error) {
+        document.getElementById("api-status").textContent = "Error";
+        showMessage(message, error.message);
+    }
+}
+
+document.getElementById("checkout-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = event.submitter;
+    button.disabled = true;
+
+    try {
+        const result = await apiRequest("/loans/checkout", {
+            method: "POST",
+            body: JSON.stringify({
+                member_id: Number(document.getElementById("member-id").value),
+                copy_id: Number(document.getElementById("copy-id").value)
+            })
+        });
+
+        showMessage(message, `Checkout successful. Loan ID: ${result.loan_id}`, "success");
+        event.target.reset();
+    } catch (error) {
+        showMessage(message, error.message);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("return-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = event.submitter;
+    button.disabled = true;
+
+    const loanId = document.getElementById("loan-id").value;
+    const returnDate = document.getElementById("return-date").value;
+
+    try {
+        const result = await apiRequest(`/loans/${encodeURIComponent(loanId)}/return`, {
+            method: "POST",
+            body: JSON.stringify(
+                returnDate ? { returned_at: returnDate } : {}
+            )
+        });
+
+        showMessage(
+            message,
+            `Return successful. Late days: ${result.late_days}; fine: ₹${result.fine_amount}`,
+            "success"
+        );
+
+        event.target.reset();
+        loadReports();
+    } catch (error) {
+        showMessage(message, error.message);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("refresh").addEventListener("click", loadReports);
+
+document.getElementById("logout").addEventListener("click", async () => {
+    try {
+        await apiRequest("/members/staff/logout", { method: "POST" });
+    } catch (error) {
+        // If the backend has no logout endpoint, the session cookie may remain
+        // until the server session expires.
+    }
+    location.href = "librarian_login.html";
+});
+
+loadReports();
+</script>
+</body>
+</html>

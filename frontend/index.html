@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Public Library</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="navbar">
+        <a class="brand" href="index.html">▤ City Public Library</a>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#catalogue">Books</a>
+            <a href="#about">About</a>
+        </nav>
+        <div class="actions">
+            <a class="btn outline" href="member_login.html">Member Login</a>
+            <a class="btn primary" href="librarian_login.html">Librarian Login</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" id="home">
+            <p class="eyebrow">YOUR COMMUNITY LIBRARY</p>
+            <h1>Discover your next<br>favourite book.</h1>
+            <p class="muted">Explore books, discover new authors and find your next great read.</p>
+
+            <form id="search-form" class="search">
+                <input id="search-input" type="search"
+                       placeholder="Search books by title or author">
+                <button class="btn primary" type="submit">Search</button>
+            </form>
+            <p id="status" class="small muted">Browse our collection.</p>
+        </section>
+
+        <section class="section" id="catalogue">
+            <div class="heading">
+                <h2>Books Catalogue</h2>
+                <span id="count" class="muted">Loading books...</span>
+            </div>
+            <div id="books" class="grid">
+                <p class="empty">Loading books...</p>
+            </div>
+        </section>
+
+        <section class="section about" id="about">
+            <h2>A library for everyone.</h2>
+            <p class="muted">Knowledge belongs to everyone.</p>
+        </section>
+    </main>
+
+    <footer>
+        <strong>▤ City Public Library</strong>
+        <span class="muted small">Read. Discover. Grow.</span>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

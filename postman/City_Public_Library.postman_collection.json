@@ -1,0 +1,265 @@
+{
+  "info": {
+    "name": "City Public Library API",
+    "description": "API collection for books, members, loans, fines, reports, and partner authentication.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "partner_api_key",
+      "value": ""
+    },
+    {
+      "key": "partner_api_secret",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "List Books",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/books/"
+          }
+        },
+        {
+          "name": "Create Book",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Clean Code\",\n  \"isbn\": \"9780132350884\",\n  \"published_year\": 2008\n}"
+            },
+            "url": "{{base_url}}/books/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "item": [
+        {
+          "name": "Register Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo Member\",\n  \"email\": \"demo.member@example.com\",\n  \"password\": \"DemoMember@123\"\n}"
+            },
+            "url": "{{base_url}}/members/register"
+          }
+        },
+        {
+          "name": "Member Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aarav@example.com\",\n  \"password\": \"LibraryDemo@123\"\n}"
+            },
+            "url": "{{base_url}}/members/login"
+          }
+        },
+        {
+          "name": "My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/members/me"
+          }
+        },
+        {
+          "name": "Staff Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"librarian1@citylibrary.com\",\n  \"password\": \"LibraryDemo@123\"\n}"
+            },
+            "url": "{{base_url}}/members/staff/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Loans",
+      "item": [
+        {
+          "name": "My Loans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/loans/my"
+          }
+        },
+        {
+          "name": "Checkout Book (Librarian Session Required)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": 1,\n  \"copy_id\": 1\n}"
+            },
+            "url": "{{base_url}}/loans/checkout"
+          }
+        },
+        {
+          "name": "Return Book (Librarian Session Required)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{base_url}}/loans/1/return"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fines",
+      "item": [
+        {
+          "name": "My Fines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/fines/my"
+          }
+        },
+        {
+          "name": "Pay Fine",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/fines/1/pay"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Overdue Loans (Librarian Session Required)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports/overdue"
+          }
+        },
+        {
+          "name": "Most Borrowed Books (Librarian Session Required)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports/most-borrowed"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Partner API",
+      "item": [
+        {
+          "name": "Partner Catalogue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{partner_api_key}}"
+              },
+              {
+                "key": "X-API-Secret",
+                "value": "{{partner_api_secret}}"
+              }
+            ],
+            "url": "{{base_url}}/partner/books"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <a class="brand" href="index.html">▤ City Library</a>
+        <nav class="side-nav">
+            <a href="#overview">Dashboard</a>
+            <a href="#loans">My Loans</a>
+            <a href="#fines">My Fines</a>
+            <a href="index.html">Books Catalogue</a>
+            <button id="logout">Logout</button>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <strong>Member Dashboard</strong>
+            <span id="member-name">My account</span>
+        </header>
+
+        <div class="content" id="overview">
+            <h1 class="page-title">Your library overview</h1>
+            <p class="page-subtitle">View your loans and outstanding fines.</p>
+            <div id="message" class="message"></div>
+
+            <div class="stats">
+                <div class="stat"><p>Active Loans</p><h3 id="active">—</h3></div>
+                <div class="stat"><p>Unpaid Fines</p><h3 id="fine-count">—</h3></div>
+                <div class="stat"><p>Outstanding Amount</p><h3 id="fine-total">—</h3></div>
+            </div>
+
+            <section class="panel" id="loans">
+                <h2>My Loans</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Book</th><th>Checkout</th><th>Due date</th><th>Status</th></tr></thead>
+                        <tbody id="loans-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="fines">
+                <h2>My Fines</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Fine ID</th><th>Loan ID</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody id="fines-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script src="auth.js"></script>
+<script>
+const loansBody = document.getElementById("loans-body");
+const finesBody = document.getElementById("fines-body");
+const message = document.getElementById("message");
+
+function getList(data, key) {
+    return Array.isArray(data) ? data : (data[key] || []);
+}
+
+async function loadDashboard() {
+    if (!getToken()) {
+        location.href = "member_login.html";
+        return;
+    }
+
+    try {
+        const [profile, loanData, fineData] = await Promise.all([
+            memberRequest("/members/me"),
+            memberRequest("/loans/my"),
+            memberRequest("/fines/my")
+        ]);
+
+        const member = profile.member || profile;
+        document.getElementById("member-name").textContent =
+            `Welcome, ${member.name || "Member"}`;
+
+        const loans = getList(loanData, "loans");
+        const fines = getList(fineData, "fines");
+        const active = loans.filter(loan => !loan.returned_at);
+        const unpaid = fines.filter(fine =>
+            String(fine.status).toLowerCase() !== "paid"
+        );
+
+        document.getElementById("active").textContent = active.length;
+        document.getElementById("fine-count").textContent = unpaid.length;
+        document.getElementById("fine-total").textContent =
+            "₹" + unpaid.reduce((sum, fine) => sum + Number(fine.amount || 0), 0);
+
+        loansBody.innerHTML = loans.length ? loans.map(loan => `
+            <tr>
+                <td>${escapeHTML(loan.title || "Book")}</td>
+                <td>${formatDate(loan.checkout_date)}</td>
+                <td>${formatDate(loan.due_date)}</td>
+                <td>${loan.returned_at ? "Returned" : "Active"}</td>
+            </tr>
+        `).join("") : '<tr><td colspan="4">No loans found.</td></tr>';
+
+        finesBody.innerHTML = fines.length ? fines.map(fine => {
+            const id = fine.fine_id ?? fine.id ?? "";
+            const paid = String(fine.status).toLowerCase() === "paid";
+
+            return `<tr>
+                <td>${escapeHTML(id || "—")}</td>
+                <td>${escapeHTML(fine.loan_id ?? "—")}</td>
+                <td>₹${Number(fine.amount || 0).toFixed(2)}</td>
+                <td>${escapeHTML(fine.status || "Unknown")}</td>
+                <td>${paid ? "Paid" :
+                    `<button class="btn primary pay-fine" data-id="${escapeHTML(id)}">Pay fine</button>`}
+                </td>
+            </tr>`;
+        }).join("") : '<tr><td colspan="5">No fines found.</td></tr>';
+
+    } catch (error) {
+        showMessage(message, error.message);
+    }
+}
+
+finesBody.addEventListener("click", async event => {
+    const button = event.target.closest(".pay-fine");
+    if (!button) return;
+
+    button.disabled = true;
+
+    try {
+        await memberRequest(`/fines/${encodeURIComponent(button.dataset.id)}/pay`, {
+            method: "POST"
+        });
+        await loadDashboard();
+    } catch (error) {
+        showMessage(message, error.message);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("logout").addEventListener("click", () => {
+    clearToken();
+    location.href = "member_login.html";
+});
+
+loadDashboard();
+</script>
+</body>
+</html>

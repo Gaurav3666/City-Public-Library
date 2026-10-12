@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+    <div class="auth-top">
+        <a class="brand" href="index.html">▤ City Public Library</a>
+    </div>
+
+    <main class="auth-wrap">
+        <div class="auth-brand">
+            <h1>Member Portal</h1>
+            <p class="muted">Welcome back, reader.</p>
+        </div>
+
+        <section class="auth-card">
+            <h2>Member Login</h2>
+            <p class="subtext">Access your loans and fines.</p>
+
+            <form id="login-form">
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input id="email" type="email" required>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" required>
+                </div>
+
+                <div id="message" class="message"></div>
+                <button id="submit" class="btn primary full">Login</button>
+            </form>
+
+            <p class="auth-footer">
+                Librarian? <a href="librarian_login.html">Staff login</a>
+            </p>
+            <a class="back" href="index.html">Back to catalogue</a>
+        </section>
+    </main>
+
+    <script src="auth.js"></script>
+    <script>
+        document.getElementById("login-form").addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const button = document.getElementById("submit");
+            const message = document.getElementById("message");
+            button.disabled = true;
+
+            try {
+                const data = await apiRequest("/members/login", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        email: document.getElementById("email").value.trim(),
+                        password: document.getElementById("password").value
+                    })
+                });
+
+                const token = data.access_token || data.token;
+
+                if (!token) {
+                    throw new Error("No access token returned. Check the backend login response.");
+                }
+
+                saveToken(token);
+                location.href = "member_dashboard.html";
+            } catch (error) {
+                showMessage(message, error.message);
+            } finally {
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
