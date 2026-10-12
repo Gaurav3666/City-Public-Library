@@ -263,6 +263,8 @@ This project demonstrates practical experience with:
 - Library borrowing and return workflows.
 - Automated testing with Pytest.
 
+Loom Video Link - https://drive.google.com/file/d/1UfCLOsrm0SPpSZ6SvB6AtVrIIDyHl4ub/view?usp=sharing
+
 ## Author
 
 **Gaurav**
