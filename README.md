@@ -190,7 +190,6 @@ The following are the main application endpoints.
 | POST | `/members/staff/login` | Librarian login |
 | POST | `/loans/checkout` | Check out a book |
 | GET | `/loans/my` | Retrieve the logged-in member's loans |
-| GET | `/loans/active` | Retrieve active loans for the librarian |
 | POST | `/loans/{loan_id}/return` | Return a borrowed book |
 | GET | `/fines/my` | Retrieve the member's fines |
 | POST | `/fines/{fine_id}/pay` | Pay a fine |
