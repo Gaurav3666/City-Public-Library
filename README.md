@@ -117,7 +117,7 @@ City-Public-Library/
 ### 1. Clone the Repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Gaurav3666/City-Public-Library.git
 cd City-Public-Library
 ```
 
